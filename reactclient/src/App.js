@@ -1,26 +1,32 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+  import React from 'react';
+  import socket from './utils/socket'
+import Widget from './Components/Widget';
+import './App.css'
+  class App extends React.Component {
+    state={
+      performanceData:{}
+    }
+    componentDidMount(){
+      socket.on('data',data=>{
+        // console.log(data)
+        const currentState=({...this.state.performanceData})
+        currentState[data.macA]=data
+        this.setState({performanceData:currentState})
+        // console.log(this.state)
+      })
+    }
+    render(){
+      let widgets=[]
+      let data=this.state.performanceData
+      Object.entries(data).forEach(([key,value])=>{
+        widgets.push(<Widget key={key} value={value} />)
+      })
+      return (
+        <div className="App">
+          {widgets}
+        </div>
+      );
+    }
+  }
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
-
-export default App;
+  export default App;

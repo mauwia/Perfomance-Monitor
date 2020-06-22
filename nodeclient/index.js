@@ -7,8 +7,15 @@ socket.on('connect',()=>{
     const nI=os.networkInterfaces()
     let macA
     for(let key in nI){
+        // for testing purpose use this 
+        // macA=Math.floor(Math.random()*3)+1
+        // break;
+        // otherwise use this condition 
         if(!nI[key][0].internal){
-            macA=nI[key][0].mac
+            if(nI[key][0].mac==="00:00:00:00:00:00")
+                macA=Math.random().toString(36).substr(2,15)
+            else
+                macA=nI[key][0].mac
             break;
         }
     }
@@ -20,7 +27,7 @@ socket.on('connect',()=>{
     })
     let perfDataInterval=setInterval(()=>{
         performanceData().then(res=>{
-            // res.macA=macA
+            res.macA=macA
             socket.emit('perfData',res)
         })
     },1000)
@@ -44,7 +51,9 @@ const performanceData=()=>{
         const cpuCores=cpus.length
         const cpuSpeed=cpus[0].speed
         const cpuLoad=await getCpuLoad()
+        let isActive=true
         resolve({
+            isActive,
             osType,
             freeMem,
             totalMem,
