@@ -1,6 +1,6 @@
 const mongoose=require('mongoose')
 const Machine=require('./Model/Machine')
-mongoose.connect(`mongodb+srv://mauwia12:muawiyah17@merng-fddnz.mongodb.net/test?retryWrites=true&w=majority`,{ useUnifiedTopology: true,useNewUrlParser: true ,'useFindAndModify':false,'useCreateIndex': true})
+mongoose.connect(process.env.MONGO_PASS,{ useUnifiedTopology: true,useNewUrlParser: true ,'useFindAndModify':false,'useCreateIndex': true})
 const checkAndAdd=data=>{
     return new Promise(async(resolve,reject)=>{
         Machine.findOne({macA:data.macA},(err,doc)=>{

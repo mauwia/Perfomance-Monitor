@@ -6,63 +6,65 @@ const socketio = require('socket.io');
 const socketMain = require('./socketMain');
 // const expressMain = require('./expressMain');
 
-const port = 8181;
+const port = process.env.PORT;
 const num_processes = require('os').cpus().length;
 
 const io_redis = require('socket.io-redis');
 const farmhash = require('farmhash');
 
 if (cluster.isMaster) {
-	
+
 	let workers = [];
 
-	
-	let spawn = function(i) {
+
+	let spawn = function (i) {
 		workers[i] = cluster.fork();
 
-		workers[i].on('exit', function(code, signal) {
+		workers[i].on('exit', function (code, signal) {
 			spawn(i);
 		});
-    };
+	};
 
-    // Spawn workers.
+	// Spawn workers.
 	for (var i = 0; i < num_processes; i++) {
 		spawn(i);
 	}
 
-	
-	const worker_index = function(ip, len) {
+
+	const worker_index = function (ip, len) {
 		return farmhash.fingerprint32(ip) % len; // Farmhash is the fastest and works with IPv6, too
 	};
 
 
-	const server = net.createServer({ pauseOnConnect: true }, (connection) =>{
-		
+	const server = net.createServer({ pauseOnConnect: true }, (connection) => {
+
 		let worker = workers[worker_index(connection.remoteAddress, num_processes)];
 		worker.send('sticky-session:connection', connection);
-    });
-    server.listen(port);
-    console.log(`Master listening on port ${port}`);
+	});
+	server.listen(port);
+	console.log(`Master listening on port ${port}`);
 } else {
-   
-    let app = express();
-    // app.use(express.static(__dirname + '/public'));
-    // app.use(helmet());
-    
+
+	let app = express();
+	// app.use(express.static(__dirname + '/public'));
+	// app.use(helmet());
+
 	// Don't expose our internal server to the outside world.
-    const server = app.listen(0, 'localhost');
-    // console.log("Worker listening...");    
+	const server = app.listen(process.env.INTERNAL_PORT);
+	// console.log("Worker listening...");    
 	const io = socketio(server);
+	//:
 
-	
-	io.adapter(io_redis({ host: 'localhost', port: 6379 }));
+	io.adapter(io_redis({
+		host:process.env.REDIS_HOST, port: process.env.REDIS_PORT,
+		password:process.env.REDIS_PASSWORD }));
 
-    io.on('connection', function(socket) {
-		socketMain(io,socket);
+	io.on('connection', function (socket) {
+		socketMain(io, socket);
 		console.log(`connected to worker: ${cluster.worker.id}`);
-    });
-		
-	process.on('message', function(message, connection) {
+	});
+
+	process.on('message', function (message, connection) {
 		if (message !== 'sticky-session:connection') {
 			return;
 		}
