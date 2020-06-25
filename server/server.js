@@ -48,9 +48,11 @@ if (cluster.isMaster) {
 	let app = express();
 	// app.use(express.static(__dirname + '/public'));
 	// app.use(helmet());
-
+app.get("/",(req,res)=>{
+	res.send("hello world")
+})
 	// Don't expose our internal server to the outside world.
-	const server = app.listen(process.env.INTERNAL_PORT);
+	const server = app.listen(process.env.PORT);
 	// console.log("Worker listening...");    
 	const io = socketio(server);
 	//:
